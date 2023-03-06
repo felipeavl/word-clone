@@ -7,6 +7,7 @@ import { sample } from "../../utils";
 
 import GuessInput from "../GuessInput/GuessInput";
 import GuessResults from "../GuessResults";
+import Keyboard from "../Keyboard/Keyboard";
 import LostGameBanner from "../LostGameBanner/LostGameBanner";
 import WonGameBanner from "../WonGameBanner/WonGameBanner";
 
@@ -18,11 +19,60 @@ console.info({ answer });
 function Game() {
   const [guessResults, setGuessResults] = React.useState([]);
   const [gameStatus, setGameStatus] = React.useState(GAME_STATUS.IN_PROGRESS);
+  const [letterResults, setLetterResults] = React.useState({
+    A: "unused",
+    B: "unused",
+    C: "unused",
+    D: "unused",
+    E: "unused",
+    F: "unused",
+    G: "unused",
+    H: "unused",
+    I: "unused",
+    J: "unused",
+    K: "unused",
+    L: "unused",
+    M: "unused",
+    N: "unused",
+    O: "unused",
+    P: "unused",
+    Q: "unused",
+    R: "unused",
+    S: "unused",
+    T: "unused",
+    U: "unused",
+    V: "unused",
+    W: "unused",
+    X: "unused",
+    Y: "unused",
+    Z: "unused",
+  });
 
   function handleGuess(guess) {
+    const result = checkGuess(guess, answer);
+
+    const newLetterResults = { ...letterResults };
+    for (const item of result) {
+      const { letter, status } = item;
+      if (status === "correct") {
+        newLetterResults[letter] = "correct";
+      }
+      if (status === "incorrect" && newLetterResults[letter] === "unused") {
+        newLetterResults[letter] = "incorrect";
+      }
+      if (
+        status === "misplaced" &&
+        (newLetterResults[letter] === "unused" ||
+          newLetterResults[letter] === "incorrect")
+      ) {
+        newLetterResults[letter] = "misplaced";
+      }
+    }
+    setLetterResults(newLetterResults);
+
     const newGuessResults = [
       ...guessResults,
-      { guess, result: checkGuess(guess, answer), key: crypto.randomUUID() },
+      { guess, result, key: crypto.randomUUID() },
     ];
     setGuessResults(newGuessResults);
     if (guess === answer) {
@@ -39,6 +89,7 @@ function Game() {
         handleGuess={handleGuess}
         disabled={gameStatus !== GAME_STATUS.IN_PROGRESS}
       />
+      <Keyboard letterResults={letterResults}></Keyboard>
       {gameStatus === GAME_STATUS.WON && (
         <WonGameBanner numOfGuesses={guessResults.length} />
       )}
