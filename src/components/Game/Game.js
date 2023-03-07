@@ -1,8 +1,12 @@
 import React from "react";
-import { GAME_STATUS, NUM_OF_GUESSES_ALLOWED } from "../../constants";
+import {
+  GAME_STATUS,
+  LETTERS_RESULTS_INITIAL_STATE,
+  NUM_OF_GUESSES_ALLOWED,
+} from "../../constants";
 
 import { WORDS } from "../../data";
-import { checkGuess } from "../../game-helpers";
+import { checkGuess, updateLetterResults } from "../../game-helpers";
 import { sample } from "../../utils";
 
 import GuessInput from "../GuessInput/GuessInput";
@@ -11,64 +15,30 @@ import Keyboard from "../Keyboard/Keyboard";
 import LostGameBanner from "../LostGameBanner/LostGameBanner";
 import WonGameBanner from "../WonGameBanner/WonGameBanner";
 
-// Pick a random word on every pageload.
-const answer = sample(WORDS);
-// To make debugging easier, we'll log the solution in the console.
-console.info({ answer });
-
 function Game() {
+  const [answer, setAnswer] = React.useState(() => {
+    const answer = sample(WORDS);
+    console.info({ answer });
+    return answer;
+  });
+
   const [guessResults, setGuessResults] = React.useState([]);
   const [gameStatus, setGameStatus] = React.useState(GAME_STATUS.IN_PROGRESS);
-  const [letterResults, setLetterResults] = React.useState({
-    A: "unused",
-    B: "unused",
-    C: "unused",
-    D: "unused",
-    E: "unused",
-    F: "unused",
-    G: "unused",
-    H: "unused",
-    I: "unused",
-    J: "unused",
-    K: "unused",
-    L: "unused",
-    M: "unused",
-    N: "unused",
-    O: "unused",
-    P: "unused",
-    Q: "unused",
-    R: "unused",
-    S: "unused",
-    T: "unused",
-    U: "unused",
-    V: "unused",
-    W: "unused",
-    X: "unused",
-    Y: "unused",
-    Z: "unused",
-  });
+  const [letterResults, setLetterResults] = React.useState(
+    LETTERS_RESULTS_INITIAL_STATE
+  );
+
+  function handleNewGame() {
+    setAnswer(sample(WORDS));
+    setGuessResults([]);
+    setGameStatus(GAME_STATUS.IN_PROGRESS);
+    setLetterResults(LETTERS_RESULTS_INITIAL_STATE);
+  }
 
   function handleGuess(guess) {
     const result = checkGuess(guess, answer);
 
-    const newLetterResults = { ...letterResults };
-    for (const item of result) {
-      const { letter, status } = item;
-      if (status === "correct") {
-        newLetterResults[letter] = "correct";
-      }
-      if (status === "incorrect" && newLetterResults[letter] === "unused") {
-        newLetterResults[letter] = "incorrect";
-      }
-      if (
-        status === "misplaced" &&
-        (newLetterResults[letter] === "unused" ||
-          newLetterResults[letter] === "incorrect")
-      ) {
-        newLetterResults[letter] = "misplaced";
-      }
-    }
-    setLetterResults(newLetterResults);
+    setLetterResults(updateLetterResults(letterResults, result));
 
     const newGuessResults = [
       ...guessResults,
@@ -91,9 +61,14 @@ function Game() {
       />
       <Keyboard letterResults={letterResults}></Keyboard>
       {gameStatus === GAME_STATUS.WON && (
-        <WonGameBanner numOfGuesses={guessResults.length} />
+        <WonGameBanner
+          numOfGuesses={guessResults.length}
+          handleNewGame={handleNewGame}
+        />
       )}
-      {gameStatus === GAME_STATUS.LOST && <LostGameBanner answer={answer} />}
+      {gameStatus === GAME_STATUS.LOST && (
+        <LostGameBanner answer={answer} handleNewGame={handleNewGame} />
+      )}
     </>
   );
 }
